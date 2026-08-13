@@ -14,6 +14,7 @@ const $ = (id) => document.getElementById(id);
 const el = {
   emptyState: $("emptyState"),
   dashboard: $("dashboard"),
+  overview: $("overview"),
   csvInput: $("csvInput"),
   dialogCsvInput: $("dialogCsvInput"),
   loadSampleBtn: $("loadSampleBtn"),
@@ -34,6 +35,7 @@ const el = {
   exportCsvBtn: $("exportCsvBtn"),
   exportJsonBtn: $("exportJsonBtn"),
   manageClassesBtn: $("manageClassesBtn"),
+  showOverviewBtn: $("showOverviewBtn"),
   classDialog: $("classDialog"),
   closeDialogBtn: $("closeDialogBtn"),
   classList: $("classList"),
@@ -73,6 +75,10 @@ function bindEvents() {
   el.exportCsvBtn.addEventListener("click", exportCsv);
   el.exportJsonBtn.addEventListener("click", exportJson);
 
+  el.showOverviewBtn.addEventListener("click", () => {
+    el.dashboard.classList.toggle("hidden");
+    el.overview.classList.toggle("hidden");
+  })
   el.manageClassesBtn.addEventListener("click", async () => {
     await renderClassManager();
     el.classDialog.showModal();
