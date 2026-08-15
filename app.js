@@ -15,6 +15,7 @@ const el = {
   emptyState: $("emptyState"),
   dashboard: $("dashboard"),
   overview: $("overview"),
+  overviewClassList: $("overviewClassList"),
   csvInput: $("csvInput"),
   dialogCsvInput: $("dialogCsvInput"),
   loadSampleBtn: $("loadSampleBtn"),
@@ -75,9 +76,10 @@ function bindEvents() {
   el.exportCsvBtn.addEventListener("click", exportCsv);
   el.exportJsonBtn.addEventListener("click", exportJson);
 
-  el.showOverviewBtn.addEventListener("click", () => {
+  el.showOverviewBtn.addEventListener("click", async () => {
     el.dashboard.classList.toggle("hidden");
     el.overview.classList.toggle("hidden");
+    await renderClassOverview();
   })
   el.manageClassesBtn.addEventListener("click", async () => {
     await renderClassManager();
@@ -538,6 +540,36 @@ async function renderClassManager() {
     });
 
     el.classList.append(item);
+  }
+}
+
+async function renderClassOverview() {
+  const classes = (await getAll("classes")).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  el.overviewClassList.innerHTML = "";
+
+  if (!classes.length) {
+    el.overviewClassList.innerHTML = `<div class="empty-list">Nenhuma turma importada.</div>`;
+    return;
+  }
+
+  for (const klass of classes) {
+    const item = document.createElement("div");
+    item.className = "class-item";
+    item.innerHTML = `
+      <div>
+        <strong>${escapeHtml(klass.name)}</strong>
+        <span>${klass.studentCount} estudante${klass.studentCount === 1 ? "" : "s"}</span>
+      </div>
+      <button class="delete-class" type="button">Excluir</button>
+    `;
+
+    item.querySelector(".delete-class").addEventListener("click", async () => {
+      await deleteClass(klass.id);
+      await renderClassOverview();
+      await refreshClasses();
+    });
+
+    el.overviewClassList.append(item);
   }
 }
 
