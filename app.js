@@ -399,6 +399,34 @@ async function openSession() {
   updateSummary();
 }
 
+async function openClassSessions(classId) {
+  const sessions = (await getByIndex("sessions", "classId", classId)).sort((a, b) => b.date.localeCompare(a.date));
+
+  el.overviewClassList.innerHTML = "";
+  if(!sessions.length) {
+    el.overviewClassList.innerHTML = `<div class="empty-list">Nenhuma chamada feita ainda</div>`;
+    return;
+  }
+
+  for (const session of sessions) {
+    const row = document.createElement("div");
+    row.className = "class-item-overview";
+    row.innerHTML = `<strong>${escapeHtml(formatDate(session.date))}</strong>`;
+    row.addEventListener("click", () => editSession(classId, session.date));
+    el.overviewClassList.append(row);
+  }
+
+  async function editSession(classId, date) {
+    el.classSelect.value = classId;
+    el.sessionDate.value = date;
+
+    el.overview.classList.add("hidden");
+    el.dashboard.classList.remove("hidden");
+
+    await openSession();
+  }
+}
+
 function renderStudents() {
   if (!currentSession) return;
 
@@ -555,18 +583,16 @@ async function renderClassOverview() {
   for (const klass of classes) {
     const item = document.createElement("div");
     item.className = "class-item-overview";
+    item.dataset.classId = klass.id;
     item.innerHTML = `
       <div>
         <strong>${escapeHtml(klass.name)}</strong>
         <span>${klass.studentCount} estudante${klass.studentCount === 1 ? "" : "s"}</span>
       </div>
-      <button class="delete-class" type="button">Excluir</button>
     `;
 
-    item.querySelector(".delete-class").addEventListener("click", async () => {
-      await deleteClass(klass.id);
-      await renderClassOverview();
-      await refreshClasses();
+    item.addEventListener("click", () => {
+      openClassSessions(klass.id);
     });
 
     el.overviewClassList.append(item);
