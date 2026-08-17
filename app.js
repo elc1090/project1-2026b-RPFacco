@@ -554,7 +554,7 @@ async function renderClassOverview() {
 
   for (const klass of classes) {
     const item = document.createElement("div");
-    item.className = "class-item";
+    item.className = "class-item-overview";
     item.innerHTML = `
       <div>
         <strong>${escapeHtml(klass.name)}</strong>

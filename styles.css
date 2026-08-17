@@ -451,6 +451,17 @@ dialog::backdrop {
   border-radius: 12px;
 }
 
+.class-item-overview {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background-color: var(--line);
+}
+
 .class-item strong { display: block; }
 .class-item span { color: var(--muted); font-size: .78rem; }
 
