@@ -70,8 +70,12 @@ tal id fica dentro de função no js `bindEvents` cuida de todos os clique e eve
 Dessa forma, fiz a mesma coisa com o botão Visão Geral, aproveitando o código que Turmas utiliza. Após isso, precisei desenvolver a lógica de "clicar em turma -> mostrar todas as chamadas em lista, de acordo com id da turma e data", e para isso criei uma nova função para cuidar disso. Eu já entendia o que e como queria fazer, porém, o JavaScript é para mim uma linguagem nova, então precisei consultar IA para entender como "escrever em JS" meu objetivo.
 Com isso, Visão Geral era funcional, apesar de não muito bonito.
 
-#### Quarta demanda (Gráficos em Visão Geral)
-Aqui, decidi primeiramente pesquisar por bibliotecas JavaScript que faziam a construção de gráficos para mim. ...
+#### Quarta demanda (Gráfico em Visão Geral)
+Aqui, decidi primeiramente pesquisar por bibliotecas JavaScript que faziam a construção de gráficos para mim. Achei a Chart.js, e importei no HTML com `script`, e depois criei uma nova `div` em na seção de overview para colocar o `overviewCharts`. Dessa maneira, cada chart pode ser adicionado com um `canvas`.
+
+`overviewCharts` sai de `hidden` quando uma turma é clicada, assim mostrando o gráfico construído na função `renderAttendanceChart`. Para essa construção, eu preciso dos status de faltas da turma selecionada, e isso é feito pela função `buildAttendanceStats` e então usado pela função de renderização do chart.
+
+Por enquanto só há um gráfico, mas é possível adicionar mais. Quando terminei o primeiro grtáfico, decidi partir para a próxima demanda. Nessa demanda, aprendi sobre a biblioteca Chart.js e como construir gráficos com ela.
 
 ### Trechos de código
 
