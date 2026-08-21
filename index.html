@@ -114,6 +114,11 @@
       </section>
       <section id="overview" class="dashboard hidden">
         <div id="overviewClassList" class="class-list"></div>
+        <div id="overviewCharts" class="hidden">
+          <div class="chart-box">
+            <canvas id="attendanceChart"></canvas>
+          </div>
+        </div>
       </section>
     </main>
   </div>
@@ -159,9 +164,9 @@
       </div>
     </form>
   </dialog>
-
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

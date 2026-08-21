@@ -26,6 +26,11 @@ body {
   background: var(--bg);
 }
 
+.chart-box {
+  position: relative;
+  height: 320px;
+}
+
 button, input, select {
   font: inherit;
 }

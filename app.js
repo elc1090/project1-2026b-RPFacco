@@ -8,6 +8,7 @@ let currentStudents = [];
 let currentSession = null;
 let attendanceMap = new Map();
 let currentFilter = "all";
+let attendanceChart = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -16,6 +17,8 @@ const el = {
   dashboard: $("dashboard"),
   overview: $("overview"),
   overviewClassList: $("overviewClassList"),
+  overviewCharts: $("overviewCharts"),
+  attendanceChart: $("attendanceChart"),
   csvInput: $("csvInput"),
   dialogCsvInput: $("dialogCsvInput"),
   loadSampleBtn: $("loadSampleBtn"),
@@ -425,6 +428,50 @@ async function openClassSessions(classId) {
 
     await openSession();
   }
+
+  el.overviewCharts.classList.remove("hidden");
+  await renderAttendanceChart(classId);
+}
+
+async function renderAttendanceChart(classId) {
+  const stats = await buildAttendanceStats(classId);
+
+  if (attendanceChart) attendanceChart.destroy();
+
+  attendanceChart = new Chart(el.attendanceChart, {
+    type: "bar",
+    data: {
+      labels: stats.map(s => s.date),
+      datasets: [{
+        label: "Presentes",
+        data: stats.map(s => s.presentes),
+        backgroundColor: "#86b986"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, max: stats[0]?.total ?? 0 }
+      }
+    }
+  });
+}
+
+async function buildAttendanceStats(classId) {
+  const students = await getByIndex("students", "classId", classId);
+  const sessions = (await getByIndex("sessions", "classId", classId))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+  const total = students.length;
+  const stats = [];
+
+  for (const session of sessions) {
+    const faltas = await getByIndex("attendance", "sessionId", session.id);
+    stats.push({ date: session.date, presentes: total - faltas.length, total });
+  }
+
+  return stats;
 }
 
 function renderStudents() {
@@ -572,6 +619,7 @@ async function renderClassManager() {
 }
 
 async function renderClassOverview() {
+  el.overviewCharts.classList.add("hidden");
   const classes = (await getAll("classes")).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   el.overviewClassList.innerHTML = "";
 
