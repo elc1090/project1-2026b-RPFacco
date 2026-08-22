@@ -688,8 +688,15 @@ function exportCsv() {
     ]);
   });
 
-  const csv = rows.map(row => row.map(csvEscape).join(",")).join("\n");
-  downloadBlob(csv, `${safeFileName(currentClass.name)}-${currentSession.date}.csv`, "text/csv;charset=utf-8");
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF()
+
+  doc.autoTable({
+    head: [rows[0]],
+    body: rows.slice(1)
+  });
+
+  doc.save(`${safeFileName(currentClass.name)}-${currentSession.date}.pdf`);
 }
 
 function exportJson() {
