@@ -16,6 +16,8 @@ const $ = (id) => document.getElementById(id);
 const el = {
   emptyState: $("emptyState"),
   dashboard: $("dashboard"),
+  studentSelect: $("studentSelect"),
+  exportStudentPdfBtn: $("exportStudentPdfBtn"),
   overview: $("overview"),
   overviewActions: $("overviewActions"),
   exportClassPdfBtn: $("exportClassPdfBtn"),
@@ -83,6 +85,10 @@ function bindEvents() {
   el.exportJsonBtn.addEventListener("click", exportJson);
 
   el.exportClassPdfBtn.addEventListener("click", () => exportClassPdf(overviewClassId));
+
+  el.exportStudentPdfBtn.addEventListener("click", () =>
+      exportStudentPdf(overviewClassId, el.studentSelect.value)
+  );
 
   el.showOverviewBtn.addEventListener("click", async () => {
     el.dashboard.classList.toggle("hidden");
@@ -437,6 +443,17 @@ async function openClassSessions(classId) {
   overviewClassId = classId;
   el.overviewActions.classList.remove("hidden");
 
+  const students = (await getByIndex("students", "classId", classId))
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+
+  el.studentSelect.innerHTML = "";
+  for (const s of students) {
+    const option = document.createElement("option");
+    option.value = s.key;
+    option.textContent = s.name;
+    el.studentSelect.append(option);
+  }
+
   el.overviewCharts.classList.remove("hidden");
   await renderAttendanceChart(classId);
 }
@@ -703,6 +720,33 @@ function drawSession(doc, klass, session, students, absentKeys) {
   });
 }
 
+function drawStudentReport(doc, klass, student, sessions, absentSessionIds) {
+  const faltas = sessions.filter(s => absentSessionIds.has(s.id)).length;
+  const presencas = sessions.length - faltas;
+  const frequencia = Math.round((presencas / sessions.length) * 100);
+
+  doc.setFontSize(16);
+  doc.text(student.name, 14, 20);
+
+  doc.setFontSize(11);
+  doc.text(klass.name, 14, 27);
+  doc.text(`${presencas} de ${sessions.length} chamadas · ${frequencia}% de frequência`, 14, 34);
+
+  const rows = [["data", "status"]];
+  sessions.forEach(session => {
+    rows.push([
+      session.date,
+      absentSessionIds.has(session.id) ? "absent" : "present"
+    ]);
+  });
+
+  doc.autoTable({
+    head: [rows[0]],
+    body: rows.slice(1),
+    startY: 44
+  });
+}
+
 function exportPdf() {
   if (!currentSession) return;
 
@@ -743,6 +787,31 @@ async function exportClassPdf(classId) {
   }
 
   doc.save(`${safeFileName(klass.name)}-todas-chamadas.pdf`);
+}
+
+async function exportStudentPdf(classId, studentKey) {
+  if (!classId || !studentKey) {
+    showToast("Selecione uma turma e um estudante.");
+    return;
+  }
+
+  const klass = await requestToPromise(tx("classes").get(classId));
+  const student = await requestToPromise(tx("students").get(studentKey));
+  const sessions = (await getByIndex("sessions", "classId", classId))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!sessions.length) {
+    showToast("Essa turma ainda não tem chamadas.");
+    return;
+  }
+
+  const absences = await getByIndex("attendance", "studentKey", studentKey);
+  const absentSessionIds = new Set(absences.map(a => a.sessionId));
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  drawStudentReport(doc, klass, student, sessions, absentSessionIds);
+  doc.save(`${safeFileName(klass.name)}-${safeFileName(student.name)}.pdf`);
 }
 
 function exportJson() {
