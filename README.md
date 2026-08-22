@@ -4,8 +4,7 @@
 
 ## Acesso
 
-Substitua este texto pela URL para acesso ao seu app publicado. Adicione a URL também na seção "About" do seu repositório no GitHub.
-
+https://elc1090.github.io/project1-2026b-RPFacco/
 
 ## Desenvolvedor(a)
 Nome: Ricardo Facco Pigatto<br>
