@@ -1,7 +1,6 @@
 # Projeto: Remake de aplicação web simples
 
-Substitua a imagem ao lado por um GIF/WEBP animado mostrando seu projeto
-
+![GIF](./gif.gif)
 
 ## Acesso
 
@@ -85,31 +84,77 @@ A jsPDF tem um plugin que constrói tabelas, o jspdf-autotable, que facilitaria 
 
 Para a terceira demanda, criei um botão novo na Visão geral, que aparece junto com o gráfico quando uma turma é clicada. O interessante no app é que o `IndexedDB` não guarda as presenças de fato, somente as faltas de cada aluno, então a presença é a ausência de registro.  Então, pra cada chamada, eu busco só as faltas e monto um `Set` com elas, se a chave do aluno não está no `Set`, ele estava presente.
 
+#### Quinta demanda (PDF por aluno)
+Como a Visão geral já tinha o botão de exportar a turma inteira, aproveitei a mesma div e coloquei um select com os alunos da turma ao lado dele. O select é preenchido quando uma turma é clicada.
+
+Com o aluno selecionado, fui buscar as faltas dele. Aqui descobri que o store attendance tem um índice por `studentKey` que eu ainda não tinha usado nas outras demandas.  Na hora de montar a tabela percebi que não dava pra reaproveitar o `drawSession` da demanda anterior, pois tinha propósito bem diferente. Então criei uma função nova, a   
+`drawStudentReport`.
+
 ### Trechos de código
+#### 1. O objeto `el`
 
-Indique pelo menos 3 trechos de código que você queira destacar para a turma (por exemplo, para contrastar com o código original, para explicar algo que aprendeu, para alertar sobre alguma dificuldade de compreensão, para mostrar uma curiosidade, etc).
+A primeira coisa que notei no JavaScript foi o `const el`:
 
+```javascript
+const $ = (id) => document.getElementById(id);
+
+const el = {
+    emptyState: $("emptyState"),
+    dashboard: $("dashboard"),
+    studentSelect: $("studentSelect"), ...
+```
+
+Isso serve para ter um lugar só que lista todos os elementos da página que o app usa, em vez de ter um monte de `document.getElementById` espalhado.
+
+#### 2. Presença é a ausência de registro
+```javascript
+const absents = await getByIndex("attendance", "sessionId", session.id);
+const absentKeys = new Set(absents.map(a => a.studentKey));
+
+// e para cada aluno:
+absentKeys.has(student.key) ? "absent" : "present"
+```
+
+Eu esperava que o banco tivesse um registro por aluno dizendo presente ou ausente, mas olhando o `setPresence` vi que marcar presente apaga o registro do IndexedDB. Então    
+numa turma de 8 alunos com 2 faltas, o banco tem 2 registros, não 8.
+
+#### 3. Quando a função precisa ser async
+```javascript
+function exportPdf() {
+    const absentKeys = new Set(...);
+    drawSession(doc, currentClass, currentSession, currentStudents, absentKeys);
+}
+async function exportStudentPdf(classId, studentKey) {
+    const klass = await requestToPromise(tx("classes").get(classId));
+    const sessions = await getByIndex("sessions", "classId", classId);
+}
+```
+
+Foi um conceito novo para mim, mas era bem simples. No exemplo, a `exportPdf` usa o que já está carregado na memória, e a `exportStudentPdf` precisa buscar no IndexedDB, que demora.
+
+O async serve pra poder usar o await dentro da função, e o await pausa só aquela função enquanto espera o dado chegar, deixando o resto da página respondendo normalmente.
 
 ## Tecnologias
 
 ### Linguagens e afins
-
-Substitua este trecho por uma lista detalhada de tecnologias usadas no remake (tanto as básicas, como HTML, CSS e JavaScript, como alguma específica, por exemplo APIs externas, etc.):
-- ...
-- ...
--
+- HTML
+- CSS
+- JavaScript
+- IndexedDB
+- Chart.js
+- jsPDF
+- jsPDF-AutoTable
 
 ### Ambiente de desenvolvimento
-
-Substitua este trecho por uma lista detalhada dos ambientes/ferramentas de desenvolvimento que você usou (por exemplo, VS Code + alguma extensão, agentes de IA, etc.)
-- ...
-- ...
+- IntelliJ IDEA
+- Git e GitHub
+- Claude Code - agente de IA, usado para entender como o código funciona e tirar dúvidas.
 
 ## Referências e créditos
-
-Substitua este trecho por uma lista bem detalhada de todo material que você consultou para ajudar no projeto, por exemplo:  URLs de vídeos ou outro material consultado, créditos para colegas que colaboraram, geradores de código, etc.
-- ...
-- ...
+- App original: demo-attendance-indexeddb, de Andrea Schwertner Charão (AndreaInfUFSM)
+- Documentação do Chart.js
+- Documentação do jsPDF e jsPDF-AutoTable
+- Claude - usado para: entender trechos do código original; esclarecer conceitos de JavaScript; ajudar na tradução da minha intenção para a sintaxe da linguagem.
 
 
 
