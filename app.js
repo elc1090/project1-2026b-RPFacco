@@ -36,7 +36,7 @@ const el = {
   studentList: $("studentList"),
   markAllPresentBtn: $("markAllPresentBtn"),
   saveState: $("saveState"),
-  exportCsvBtn: $("exportCsvBtn"),
+  exportPdfBtn: $("exportPdfBtn"),
   exportJsonBtn: $("exportJsonBtn"),
   manageClassesBtn: $("manageClassesBtn"),
   showOverviewBtn: $("showOverviewBtn"),
@@ -76,7 +76,7 @@ function bindEvents() {
   });
   el.searchInput.addEventListener("input", renderStudents);
   el.markAllPresentBtn.addEventListener("click", markAllPresent);
-  el.exportCsvBtn.addEventListener("click", exportCsv);
+  el.exportPdfBtn.addEventListener("click", exportPdf);
   el.exportJsonBtn.addEventListener("click", exportJson);
 
   el.showOverviewBtn.addEventListener("click", async () => {
@@ -675,7 +675,7 @@ async function deleteClass(classId) {
   showToast("Turma excluída.");
 }
 
-function exportCsv() {
+function exportPdf() {
   if (!currentSession) return;
 
   const rows = [["id", "nome", "data", "status"]];
