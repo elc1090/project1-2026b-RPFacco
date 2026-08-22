@@ -63,6 +63,7 @@ Arthur Moro Fróes
 #### Primeira demanda (Visão Geral)
 Primeiro, decidi explorar como era feito o botão "Turmas" para poder colocar um botão de visão geral do lado. Tentei copiar e colar o `button` Turmas, mas na página os botões ficavam com um espaçamento muito grande um do outro, em vez de ficarem juntos lado a lado.<br>
 Descobri que a classe css que os botões usavam faziam com que a distribuição de elementos em `header` ficassem igualmente espaçados, com `display: flex` e `justify-content: space-between`<br>
+
 Para resolver, coloquei os dois `button` em uma div, então agora são tratados como um elemento só.
 O meu próximo passo foi olhar como funcionava o botão de Turmas e como ele se ligava ao JavaScript. Notei que "id" fazia essa ligação, da seguinte maneira:<br>
 tal id fica dentro de função no js `bindEvents` cuida de todos os clique e eventos --> quando é clicado, chama outra função (async?) que é onde está a lógica para mostrar as turmas.
@@ -76,6 +77,13 @@ Aqui, decidi primeiramente pesquisar por bibliotecas JavaScript que faziam a con
 `overviewCharts` sai de `hidden` quando uma turma é clicada, assim mostrando o gráfico construído na função `renderAttendanceChart`. Para essa construção, eu preciso dos status de faltas da turma selecionada, e isso é feito pela função `buildAttendanceStats` e então usado pela função de renderização do chart.
 
 Por enquanto só há um gráfico, mas é possível adicionar mais. Quando terminei o primeiro grtáfico, decidi partir para a próxima demanda. Nessa demanda, aprendi sobre a biblioteca Chart.js e como construir gráficos com ela.
+
+#### Segunda e Terceira demanda (Exportar em PDF)
+Para a segunda e terceira demanda, comecei do mesmo jeito que na quarta: procurando uma biblioteca que fizesse o PDF por mim. As duas que me chamaram atenção foram `html2pdf` e `jsPDF`. A primeira resolveria a demanda estética, já que literalmente tira uma print da tela e coloca como imagem no pdf. Mas decidi não escolher essa opção, justamente porque o pdf seria só o conjunto de várias prints, sem texto selecionável.
+
+A jsPDF tem um plugin que constrói tabelas, o jspdf-autotable, que facilitaria o trabalho. Importei as duas no HTML com script, igual fiz com a Chart.js. Percebi que a ordem importa, pois o jspdf-autotable procura o jsPDF já importado. Como o app já exportava CSV, aproveitei a função que existia. A `exportCsv` já montava um array rows com id, nome, data e status de cada aluno, e isso serve igual pro `autoTable`, que também quer um array de arrays
+
+Para a terceira demanda, criei um botão novo na Visão geral, que aparece junto com o gráfico quando uma turma é clicada. O interessante no app é que o `IndexedDB` não guarda as presenças de fato, somente as faltas de cada aluno, então a presença é a ausência de registro.  Então, pra cada chamada, eu busco só as faltas e monto um `Set` com elas, se a chave do aluno não está no `Set`, ele estava presente.
 
 ### Trechos de código
 
