@@ -9,6 +9,7 @@ let currentSession = null;
 let attendanceMap = new Map();
 let currentFilter = "all";
 let attendanceChart = null;
+let overviewClassId = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -16,6 +17,8 @@ const el = {
   emptyState: $("emptyState"),
   dashboard: $("dashboard"),
   overview: $("overview"),
+  overviewActions: $("overviewActions"),
+  exportClassPdfBtn: $("exportClassPdfBtn"),
   overviewClassList: $("overviewClassList"),
   overviewCharts: $("overviewCharts"),
   attendanceChart: $("attendanceChart"),
@@ -78,6 +81,8 @@ function bindEvents() {
   el.markAllPresentBtn.addEventListener("click", markAllPresent);
   el.exportPdfBtn.addEventListener("click", exportPdf);
   el.exportJsonBtn.addEventListener("click", exportJson);
+
+  el.exportClassPdfBtn.addEventListener("click", () => exportClassPdf(overviewClassId));
 
   el.showOverviewBtn.addEventListener("click", async () => {
     el.dashboard.classList.toggle("hidden");
@@ -429,6 +434,9 @@ async function openClassSessions(classId) {
     await openSession();
   }
 
+  overviewClassId = classId;
+  el.overviewActions.classList.remove("hidden");
+
   el.overviewCharts.classList.remove("hidden");
   await renderAttendanceChart(classId);
 }
@@ -620,6 +628,8 @@ async function renderClassManager() {
 
 async function renderClassOverview() {
   el.overviewCharts.classList.add("hidden");
+  el.overviewActions.classList.add("hidden");
+  overviewClassId = null;
   const classes = (await getAll("classes")).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   el.overviewClassList.innerHTML = "";
 
@@ -675,28 +685,64 @@ async function deleteClass(classId) {
   showToast("Turma excluída.");
 }
 
-function exportPdf() {
-  if (!currentSession) return;
-
+function drawSession(doc, klass, session, students, absentKeys) {
   const rows = [["id", "nome", "data", "status"]];
-  currentStudents.forEach(student => {
+  students.forEach(student => {
     rows.push([
       student.id,
       student.name,
-      currentSession.date,
-      attendanceMap.get(student.key) === "absent" ? "absent" : "present"
+      session.date,
+      absentKeys.has(student.key) ? "absent" : "present"
     ]);
   });
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF()
-
   doc.autoTable({
     head: [rows[0]],
-    body: rows.slice(1)
+    body: rows.slice(1),
+    startY: 20
   });
+}
 
+function exportPdf() {
+  if (!currentSession) return;
+
+  const absentKeys = new Set(
+      currentStudents.filter(s => attendanceMap.get(s.key) === "absent").map(s => s.key)
+  );
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  drawSession(doc, currentClass, currentSession, currentStudents, absentKeys);
   doc.save(`${safeFileName(currentClass.name)}-${currentSession.date}.pdf`);
+}
+
+async function exportClassPdf(classId) {
+  if (!classId) return;
+
+  const klass = await requestToPromise(tx("classes").get(classId));
+  const students = (await getByIndex("students", "classId", classId))
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  const sessions = (await getByIndex("sessions", "classId", classId))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!sessions.length) {
+    showToast("Essa turma ainda não tem chamadas.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  for (let i = 0; i < sessions.length; i++) {
+    if (i > 0) doc.addPage();
+
+    const absents = await getByIndex("attendance", "sessionId", sessions[i].id);
+    const absentKeys = new Set(absents.map(a => a.studentKey));
+
+    drawSession(doc, klass, sessions[i], students, absentKeys);
+  }
+
+  doc.save(`${safeFileName(klass.name)}-todas-chamadas.pdf`);
 }
 
 function exportJson() {
